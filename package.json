@@ -1,0 +1,17 @@
+{
+  "name": "proyecto-so-portal",
+  "version": "1.0.0",
+  "description": "Portal Académico de Sistemas Operativos y Ciberseguridad con base de datos MySQL",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "mysql2": "^3.9.8"
+  },
+  "author": "UMG Estudiante",
+  "license": "ISC"
+}
