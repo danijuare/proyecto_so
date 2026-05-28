@@ -1,8 +1,36 @@
 /**
  * Portal Académico SO & Ciberseguridad - Lógica de Sesiones, Roles y Notificaciones
+ * Con Protecciones: XSS, JWT, Validación de Entrada
  */
 
 const API_URL = 'http://localhost:3000/api';
+
+// Función para escapar HTML y prevenir XSS
+function escapeHTML(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+// Detectar caracteres o palabras peligrosas en inputs (cliente)
+function containsDangerousInput(value) {
+    if (!value || typeof value !== 'string') return false;
+    const dangerousChars = ['<', '>', '"', "'", '&', ';', '(', ')', '{', '}', '|', '\\', '^', '`', '$'];
+    for (let ch of dangerousChars) {
+        if (value.includes(ch)) return true;
+    }
+    const keywords = ['script', 'alert', 'onclick', 'onerror', 'onload', 'javascript:', 'data:', 'vbscript:', 'iframe', 'img', 'svg'];
+    const lower = value.toLowerCase();
+    for (let kw of keywords) {
+        if (lower.includes(kw)) return true;
+    }
+    return false;
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     // Determinar la página actual
@@ -94,10 +122,17 @@ function showToast(title, message, type = 'success') {
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     
-    toast.innerHTML = `
-        <div class="toast-title">${title}</div>
-        <div class="toast-msg">${message}</div>
-    `;
+    // Sanitizar datos para prevenir XSS
+    const titleEl = document.createElement('div');
+    titleEl.className = 'toast-title';
+    titleEl.textContent = title; // Usar textContent en lugar de innerHTML
+    
+    const msgEl = document.createElement('div');
+    msgEl.className = 'toast-msg';
+    msgEl.textContent = message; // Usar textContent en lugar de innerHTML
+    
+    toast.appendChild(titleEl);
+    toast.appendChild(msgEl);
     
     container.appendChild(toast);
     
@@ -121,6 +156,9 @@ function initLoginPage() {
         
         const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value;
+
+        //console.log("email ", email);
+        //console.log("password ", password);
         
         // Validaciones básicas del lado del cliente
         if (!email || !password) {
@@ -131,6 +169,17 @@ function initLoginPage() {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             showToast('Formato inválido', 'Por favor, ingresa un correo electrónico válido.', 'error');
+            return;
+        }
+        // Bloquear inputs con caracteres o palabras peligrosas
+        if (containsDangerousInput(email)) {
+            showToast('Entrada peligrosa', 'El correo contiene caracteres o contenido no permitido.', 'error');
+            return;
+        }
+        
+        // Validar longitud de contraseña
+        if (password.length < 6 || password.length > 100) {
+            showToast('Contraseña inválida', 'La contraseña debe tener entre 6 y 100 caracteres.', 'error');
             return;
         }
         
@@ -151,12 +200,13 @@ function initLoginPage() {
                 return;
             }
 
-            // Inicio de sesión exitoso
+            // Inicio de sesión exitoso - Guardar JWT token
             sessionStorage.setItem('isLoggedIn', 'true');
-            sessionStorage.setItem('userEmail', data.user.email);
+            sessionStorage.setItem('authToken', data.token);
+            sessionStorage.setItem('userEmail', escapeHTML(data.user.email));
             sessionStorage.setItem('userRole', data.user.rol);
             
-            showToast('¡Bienvenido!', `Autenticado con éxito. Rol: ${data.user.rol}`, 'success');
+            showToast('¡Bienvenido!', 'Autenticado con éxito.', 'success');
             
             // Redirigir a la página de Sistemas Operativos después de 1.5 segundos
             setTimeout(() => {
@@ -165,7 +215,7 @@ function initLoginPage() {
 
         } catch (error) {
             console.error('Fetch error:', error);
-            showToast('Error de Servidor', 'No se pudo conectar con el servidor. Verifica que esté activo y conectado a la BD.', 'error');
+            showToast('Error de Servidor', 'No se pudo conectar con el servidor.', 'error');
         }
     });
 }
@@ -180,11 +230,17 @@ function initAdminPage() {
 
     async function fetchUsers() {
         try {
-            const role = sessionStorage.getItem('userRole');
+            const token = sessionStorage.getItem('authToken');
+            if (!token) {
+                showToast('Error', 'Token de autenticación no disponible.', 'error');
+                return;
+            }
+            
             const response = await fetch(`${API_URL}/users`, {
                 method: 'GET',
                 headers: {
-                    'x-user-role': role
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
                 }
             });
 
@@ -199,11 +255,18 @@ function initAdminPage() {
             adminTableBody.innerHTML = '';
 
             if (data.users.length === 0) {
-                adminTableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No hay usuarios registrados.</td></tr>`;
+                const emptyRow = document.createElement('tr');
+                const emptyCell = document.createElement('td');
+                emptyCell.colSpan = '4';
+                emptyCell.style.textAlign = 'center';
+                emptyCell.style.color = 'var(--text-muted)';
+                emptyCell.textContent = 'No hay usuarios registrados.';
+                emptyRow.appendChild(emptyCell);
+                adminTableBody.appendChild(emptyRow);
                 return;
             }
 
-            // Llenar tabla
+            // Llenar tabla con datos sanitizados
             data.users.forEach(user => {
                 const tr = document.createElement('tr');
                 const fecha = new Date(user.fecha_creacion).toLocaleString('es-GT', {
@@ -214,18 +277,33 @@ function initAdminPage() {
                     minute: '2-digit'
                 });
 
-                tr.innerHTML = `
-                    <td><strong>${user.id}</strong></td>
-                    <td>${escapeHTML(user.email)}</td>
-                    <td><span class="role-badge ${user.rol}">${user.rol}</span></td>
-                    <td style="color: var(--text-secondary);">${fecha}</td>
-                `;
+                const idCell = document.createElement('td');
+                idCell.innerHTML = `<strong>${user.id}</strong>`;
+                
+                const emailCell = document.createElement('td');
+                emailCell.textContent = user.email; // Ya sanitizado en backend
+                
+                const rolBadge = document.createElement('span');
+                rolBadge.className = `role-badge ${user.rol}`;
+                rolBadge.textContent = user.rol;
+                const rolCell = document.createElement('td');
+                rolCell.appendChild(rolBadge);
+                
+                const fechaCell = document.createElement('td');
+                fechaCell.style.color = 'var(--text-secondary)';
+                fechaCell.textContent = fecha;
+
+                tr.appendChild(idCell);
+                tr.appendChild(emailCell);
+                tr.appendChild(rolCell);
+                tr.appendChild(fechaCell);
+                
                 adminTableBody.appendChild(tr);
             });
 
         } catch (error) {
             console.error('Error fetching users:', error);
-            showToast('Error de Conexión', 'No se pudieron recuperar los usuarios del servidor.', 'error');
+            showToast('Error de Conexión', 'No se pudieron recuperar los usuarios.', 'error');
         }
     }
 
@@ -249,19 +327,34 @@ function initAdminPage() {
                 showToast('Formato de correo', 'Por favor ingresa un correo válido.', 'error');
                 return;
             }
+            // Bloquear inputs peligrosos en creación de usuarios
+            if (containsDangerousInput(email)) {
+                showToast('Entrada peligrosa', 'El correo contiene caracteres o contenido no permitido.', 'error');
+                return;
+            }
 
-            if (password.length < 4) {
-                showToast('Contraseña corta', 'La contraseña debe tener al menos 4 caracteres.', 'error');
+            if (password.length < 6 || password.length > 100) {
+                showToast('Contraseña inválida', 'La contraseña debe tener entre 6 y 100 caracteres.', 'error');
+                return;
+            }
+
+            if (!['Normal', 'Admin'].includes(rol)) {
+                showToast('Rol inválido', 'Por favor selecciona un rol válido.', 'error');
                 return;
             }
 
             try {
-                const role = sessionStorage.getItem('userRole');
+                const token = sessionStorage.getItem('authToken');
+                if (!token) {
+                    showToast('Error', 'Token no disponible.', 'error');
+                    return;
+                }
+                
                 const response = await fetch(`${API_URL}/users`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'x-user-role': role
+                        'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({ email, password, rol })
                 });
