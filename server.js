@@ -1,6 +1,7 @@
 const express = require('express');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = 3000;
@@ -23,6 +24,11 @@ const dbConfig = {
 };
 
 let pool;
+
+// Función para hashear contraseñas con SHA256
+function hashPassword(password) {
+    return crypto.createHash('sha256').update(password).digest('hex');
+}
 
 // Intentar inicializar el pool de conexiones
 try {
@@ -49,7 +55,7 @@ async function checkDbConnection(req, res, next) {
 
 // --- ENDPOINTS DE API ---
 
-// 1. Iniciar Sesión (Validación contra base de datos)
+// 1. Iniciar Sesión (Validación contra base de datos con SHA256)
 app.post('/api/login', checkDbConnection, async (req, res) => {
     const { email, password } = req.body;
     
@@ -66,8 +72,9 @@ app.post('/api/login', checkDbConnection, async (req, res) => {
         
         const user = rows[0];
         
-        // Verificación de contraseña simple (texto plano para fines académicos)
-        if (user.password !== password) {
+        // Hashear la contraseña ingresada y compararla con la almacenada
+        const hashedPassword = hashPassword(password);
+        if (user.password !== hashedPassword) {
             return res.status(401).json({ success: false, message: 'Contraseña incorrecta.' });
         }
         
@@ -120,8 +127,10 @@ app.post('/api/users', checkDbConnection, async (req, res) => {
     }
     
     try {
+        // Hashear la contraseña antes de almacenarla
+        const hashedPassword = hashPassword(password);
         // Insertar en la BD
-        await pool.query('INSERT INTO usuarios (email, password, rol) VALUES (?, ?, ?)', [email, password, rol]);
+        await pool.query('INSERT INTO usuarios (email, password, rol) VALUES (?, ?, ?)', [email, hashedPassword, rol]);
         
         return res.status(201).json({ 
             success: true, 

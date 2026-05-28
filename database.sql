@@ -11,7 +11,7 @@ USE portal_db;
 CREATE TABLE IF NOT EXISTS usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(100) UNIQUE NOT NULL,
-    password VARCHAR(100) NOT NULL, -- Almacenado de forma simple para fines académicos
+    password VARCHAR(64) NOT NULL, -- SHA256 hash (64 caracteres hexadecimales)
     rol VARCHAR(20) NOT NULL DEFAULT 'Normal', -- 'Normal' o 'Admin'
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
@@ -20,13 +20,16 @@ CREATE TABLE IF NOT EXISTS usuarios (
 TRUNCATE TABLE usuarios;
 
 -- 4. Insertar Usuarios de Prueba (Roles: Normal y Admin)
+-- Las contraseñas están encriptadas en SHA256
 -- Cuenta Administrador (Puede ver y crear usuarios)
+-- Contraseña original: admin123 (SHA256 hasheada)
 INSERT INTO usuarios (email, password, rol) 
-VALUES ('admin@umg.edu.gt', 'admin123', 'Admin');
+VALUES ('admin@umg.edu.gt', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 'Admin');
 
 -- Cuenta Normal (Solo puede ver el contenido)
+-- Contraseña original: user123 (SHA256 hasheada)
 INSERT INTO usuarios (email, password, rol) 
-VALUES ('user@umg.edu.gt', 'user123', 'Normal');
+VALUES ('user@umg.edu.gt', 'e606e38b0d8c19b24cf0ee3808183162ea7cd63ff7912dbb22b5e803286b4446', 'Normal');
 
 -- 5. Verificar registros
 SELECT id, email, rol, fecha_creacion FROM usuarios;
