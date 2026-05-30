@@ -3,10 +3,12 @@
  * Con Protecciones: XSS, JWT, Validación de Entrada
  */
 
+// API apuntando al servidor Express (Node.js)
 const API_URL = 'http://localhost:3000/api';
 
 // Función para escapar HTML y prevenir XSS
 function escapeHTML(text) {
+    if (!text || typeof text !== 'string') return text;
     const map = {
         '&': '&amp;',
         '<': '&lt;',
@@ -49,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Prevenir acceso a no administradores
                 showToast('Acceso Denegado', 'No tienes permisos para ingresar al panel de administración.', 'error');
                 setTimeout(() => {
-                    window.location.href = 'os.html';
+                    window.location.href = 'os.php';
                 }, 1500);
                 return;
             }
@@ -65,7 +67,7 @@ function checkSession() {
     const isLoggedIn = sessionStorage.getItem('isLoggedIn');
     if (!isLoggedIn || isLoggedIn !== 'true') {
         // No está logueado, redirigir al login
-        window.location.href = 'index.html';
+        window.location.href = 'index.php';
     }
 }
 
@@ -75,11 +77,12 @@ function setupLogout() {
         logoutBtn.addEventListener('click', (e) => {
             e.preventDefault();
             sessionStorage.removeItem('isLoggedIn');
+            sessionStorage.removeItem('authToken');
             sessionStorage.removeItem('userEmail');
             sessionStorage.removeItem('userRole');
             showToast('Sesión Cerrada', 'Has cerrado tu sesión correctamente.', 'success');
             setTimeout(() => {
-                window.location.href = 'index.html';
+                window.location.href = 'index.php';
             }, 1000);
         });
     }
@@ -98,7 +101,7 @@ function setupNavbar() {
             const isActive = document.body.className === 'page-admin' ? 'active' : '';
             
             adminLi.innerHTML = `
-                <a href="admin.html" class="nav-link ${isActive}" id="nav-admin" ${isActive ? 'aria-current="page"' : ''}>
+                <a href="admin.php" class="nav-link ${isActive}" id="nav-admin" ${isActive ? 'aria-current="page"' : ''}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                     Administración
                 </a>
@@ -122,14 +125,14 @@ function showToast(title, message, type = 'success') {
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     
-    // Sanitizar datos para prevenir XSS
+    // Sanitizar datos para prevenir XSS utilizando textContent
     const titleEl = document.createElement('div');
     titleEl.className = 'toast-title';
-    titleEl.textContent = title; // Usar textContent en lugar de innerHTML
+    titleEl.textContent = title; 
     
     const msgEl = document.createElement('div');
     msgEl.className = 'toast-msg';
-    msgEl.textContent = message; // Usar textContent en lugar de innerHTML
+    msgEl.textContent = message; 
     
     toast.appendChild(titleEl);
     toast.appendChild(msgEl);
@@ -146,7 +149,7 @@ function showToast(title, message, type = 'success') {
     }, 3500);
 }
 
-/* --- LOGICA DE INICIO DE SESIÓN (API) --- */
+/* --- LÓGICA DE INICIO DE SESIÓN (API) --- */
 function initLoginPage() {
     const loginForm = document.getElementById('login-form');
     if (!loginForm) return;
@@ -156,9 +159,6 @@ function initLoginPage() {
         
         const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value;
-
-        //console.log("email ", email);
-        //console.log("password ", password);
         
         // Validaciones básicas del lado del cliente
         if (!email || !password) {
@@ -171,6 +171,7 @@ function initLoginPage() {
             showToast('Formato inválido', 'Por favor, ingresa un correo electrónico válido.', 'error');
             return;
         }
+        
         // Bloquear inputs con caracteres o palabras peligrosas
         if (containsDangerousInput(email)) {
             showToast('Entrada peligrosa', 'El correo contiene caracteres o contenido no permitido.', 'error');
@@ -200,7 +201,7 @@ function initLoginPage() {
                 return;
             }
 
-            // Inicio de sesión exitoso - Guardar JWT token
+            // Inicio de sesión exitoso - Guardar JWT token y metadatos
             sessionStorage.setItem('isLoggedIn', 'true');
             sessionStorage.setItem('authToken', data.token);
             sessionStorage.setItem('userEmail', escapeHTML(data.user.email));
@@ -210,7 +211,7 @@ function initLoginPage() {
             
             // Redirigir a la página de Sistemas Operativos después de 1.5 segundos
             setTimeout(() => {
-                window.location.href = 'os.html';
+                window.location.href = 'os.php';
             }, 1500);
 
         } catch (error) {
@@ -220,7 +221,7 @@ function initLoginPage() {
     });
 }
 
-/* --- LOGICA DE PANEL DE ADMINISTRACIÓN (API) --- */
+/* --- LÓGICA DE PANEL DE ADMINISTRACIÓN (API) --- */
 function initAdminPage() {
     const adminTableBody = document.getElementById('admin-table-body');
     const adminCreateForm = document.getElementById('admin-create-form');
@@ -327,6 +328,7 @@ function initAdminPage() {
                 showToast('Formato de correo', 'Por favor ingresa un correo válido.', 'error');
                 return;
             }
+            
             // Bloquear inputs peligrosos en creación de usuarios
             if (containsDangerousInput(email)) {
                 showToast('Entrada peligrosa', 'El correo contiene caracteres o contenido no permitido.', 'error');
@@ -368,7 +370,7 @@ function initAdminPage() {
 
                 showToast('Registro Exitoso', data.message, 'success');
                 
-                // Limpiar formulario y recargar tabla
+                // Limpiar formulario y recargar tabla automáticamente
                 adminCreateForm.reset();
                 fetchUsers();
 
@@ -378,17 +380,4 @@ function initAdminPage() {
             }
         });
     }
-}
-
-// Sanitizar entradas para evitar XSS
-function escapeHTML(str) {
-    return str.replace(/[&<>'"]/g, 
-        tag => ({
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            "'": '&#39;',
-            '"': '&quot;'
-        }[tag] || tag)
-    );
 }

@@ -1,36 +1,55 @@
+<?php
+// Evitar que el navegador guarde en caché la página protegida
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+
+// Nota: El verdadero guardián sigue siendo JavaScript con el JWT, 
+// pero ocultamos el HTML por defecto usando CSS/JS síncrono para que no pinte nada.
+?>
 <!DOCTYPE html>
-<html lang="es">
-<head>
+<html lang="es" style="display: none;"> <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Administración de Usuarios - Portal Académico</title>
-    <meta name="description" content="Panel de administración exclusivo para gestionar roles y registrar nuevos usuarios.">
-    <!-- Main Premium CSS Stylesheet -->
+    <title>Administración de Usuarios</title>
     <link rel="stylesheet" href="style.css">
+    
+    <script>
+        if (sessionStorage.getItem('isLoggedIn') !== 'true') {
+            // Si no está logueado, redirige de inmediato y no muestra nada
+            window.location.replace('index.php');
+        } else {
+            // Si sí está logueado, volvemos a hacer visible la página
+            document.documentElement.style.display = 'block';
+        }
+    </script>
 </head>
 <body class="page-admin">
 
-    <!-- Sticky Navigation Bar -->
+    <script>
+        if (sessionStorage.getItem('isLoggedIn') !== 'true' || sessionStorage.getItem('userRole') !== 'Admin') {
+            window.location.replace('index.php');
+        }
+    </script>
+
     <nav class="navbar" aria-label="Navegación Principal">
         <div class="nav-brand">
             PortalOS <span>| Académico</span>
         </div>
         <ul class="nav-links">
             <li>
-                <a href="os.html" class="nav-link" id="nav-os">
+                <a href="os.php" class="nav-link" id="nav-os">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
                     Sistemas Operativos
                 </a>
             </li>
             <li>
-                <a href="security.html" class="nav-link" id="nav-security">
+                <a href="security.php" class="nav-link" id="nav-security">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
                     Ciberseguridad
                 </a>
             </li>
-            <!-- Dynamic link inserted here for Admin pages, but since we are on admin.html, it's hardcoded as active -->
             <li>
-                <a href="admin.html" class="nav-link active" id="nav-admin" aria-current="page">
+                <a href="admin.php" class="nav-link active" id="nav-admin" aria-current="page">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                     Administración
                 </a>
@@ -43,9 +62,7 @@
         </ul>
     </nav>
 
-    <!-- Main Admin Container -->
     <main class="container">
-        <!-- Dashboard Header -->
         <header style="margin-bottom: 1rem;">
             <h1 style="font-size: 2.75rem; font-weight: 800; background: linear-gradient(to right, #fff, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
                 Panel de Administración
@@ -55,10 +72,8 @@
             </p>
         </header>
 
-        <!-- Two Column Layout: User Creation and List -->
         <div style="display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 3rem; align-items: start; margin-top: -2rem;">
             
-            <!-- Column 1: User Registration Form -->
             <section aria-labelledby="form-heading">
                 <div class="glass-card">
                     <h2 id="form-heading" style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; color: white; display: flex; align-items: center; gap: 0.5rem;">
@@ -70,7 +85,6 @@
                     </p>
 
                     <form id="admin-create-form" novalidate>
-                        <!-- Email Input -->
                         <div class="form-group">
                             <label for="admin-email">Correo Electrónico</label>
                             <div class="input-wrapper">
@@ -81,7 +95,6 @@
                             </div>
                         </div>
 
-                        <!-- Password Input -->
                         <div class="form-group">
                             <label for="admin-password">Contraseña</label>
                             <div class="input-wrapper">
@@ -92,7 +105,6 @@
                             </div>
                         </div>
 
-                        <!-- Role Selection -->
                         <div class="form-group">
                             <label for="admin-role">Rol de Acceso</label>
                             <div class="input-wrapper">
@@ -113,7 +125,6 @@
                 </div>
             </section>
 
-            <!-- Column 2: User List Table -->
             <section aria-labelledby="table-heading">
                 <div class="glass-card" style="padding: 2rem;">
                     <h2 id="table-heading" style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; color: white; display: flex; align-items: center; gap: 0.5rem;">
@@ -124,7 +135,6 @@
                         Lista de cuentas registradas en la base de datos MySQL.
                     </p>
 
-                    <!-- Table Wrapper -->
                     <div class="admin-table-wrapper">
                         <table class="admin-table" aria-label="Tabla de usuarios registrados">
                             <thead>
@@ -149,10 +159,8 @@
         </div>
     </main>
 
-    <!-- Toast Notifications Container -->
     <div id="toast-container" class="toast-container"></div>
 
-    <!-- Main Logic Script -->
     <script src="app.js"></script>
 </body>
 </html>

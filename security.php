@@ -1,17 +1,30 @@
-<!DOCTYPE html>
-<html lang="es">
+<?php
+// Evitar que el navegador guarde en caché la página protegida
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
 
-<head>
+// Nota: El verdadero guardián sigue siendo JavaScript con el JWT, 
+// pero ocultamos el HTML por defecto usando CSS/JS síncrono para que no pinte nada.
+?>
+<!DOCTYPE html>
+<html lang="es" style="display: none;"> <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistemas Operativos - Portal Académico</title>
-    <meta name="description"
-        content="Aprende sobre la gestión de memoria, kernels, sistemas de archivos, herramientas de administración y optimización de sistemas operativos.">
-    <!-- Main Premium CSS Stylesheet -->
+    <title>Ciberseguridad</title>
     <link rel="stylesheet" href="style.css">
+    
+    <script>
+        if (sessionStorage.getItem('isLoggedIn') !== 'true') {
+            // Si no está logueado, redirige de inmediato y no muestra nada
+            window.location.replace('index.php');
+        } else {
+            // Si sí está logueado, volvemos a hacer visible la página
+            document.documentElement.style.display = 'block';
+        }
+    </script>
 </head>
 
-<body class="page-os">
+<body class="page-security">
 
     <!-- Sticky Navigation Bar -->
     <nav class="navbar" aria-label="Navegación Principal">
@@ -20,7 +33,7 @@
         </div>
         <ul class="nav-links">
             <li>
-                <a href="os.html" class="nav-link active" id="nav-os" aria-current="page">
+                <a href="os.php" class="nav-link" id="nav-os">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                         aria-hidden="true">
@@ -32,7 +45,7 @@
                 </a>
             </li>
             <li>
-                <a href="security.html" class="nav-link" id="nav-security">
+                <a href="security.php" class="nav-link active" id="nav-security" aria-current="page">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                         aria-hidden="true">
@@ -54,23 +67,21 @@
         <!-- Hero Section -->
         <section class="hero-section">
             <div class="hero-content">
-                <h1>Sistemas Operativos</h1>
-                <p>El sistema operativo (SO) es el software base de cualquier computadora. Controla y coordina el
-                    hardware, administra el almacenamiento, gestiona la ejecución de aplicaciones y garantiza un entorno
-                    estable y seguro para el usuario final.</p>
+                <h1>Ciberseguridad</h1>
+                <p>La ciberseguridad es la disciplina que protege la infraestructura informática, las redes y la
+                    información sensible de amenazas y accesos no autorizados en el entorno digital globalizado.</p>
             </div>
             <div class="hero-image-wrapper">
-                <img src="os_illustration.png"
-                    alt="Ilustración abstracta en 3D que representa un procesador de CPU y las capas de software de un sistema operativo"
-                    class="hero-img">
+                <img src="security_illustration.png"
+                    alt="Concepto abstracto en 3D de un escudo cibernético y conexiones encriptadas" class="hero-img">
             </div>
         </section>
 
         <!-- Conceptos Fundamentales -->
         <section class="info-section">
             <h2 class="section-title">Conceptos Clave</h2>
-            <p class="section-subtitle">Los pilares técnicos sobre los que se construyen los sistemas operativos
-                modernos.</p>
+            <p class="section-subtitle">Los principios fundamentales y amenazas principales que definen el panorama de
+                la seguridad informática.</p>
 
             <div class="cards-grid">
                 <!-- Card 1 -->
@@ -78,26 +89,15 @@
                     <div class="card-icon" aria-hidden="true">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect>
-                            <rect x="9" y="9" width="6" height="6"></rect>
-                            <line x1="9" y1="1" x2="9" y2="4"></line>
-                            <line x1="15" y1="1" x2="15" y2="4"></line>
-                            <line x1="9" y1="20" x2="9" y2="23"></line>
-                            <line x1="15" y1="20" x2="15" y2="23"></line>
-                            <line x1="20" y1="9" x2="23" y2="9"></line>
-                            <line x1="20" y1="15" x2="23" y2="15"></line>
-                            <line x1="1" y1="9" x2="4" y2="9"></line>
-                            <line x1="1" y1="15" x2="4" y2="15"></line>
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                         </svg>
                     </div>
-                    <h3>El Núcleo (Kernel)</h3>
-                    <p>El núcleo es la capa de software más baja de un sistema operativo. Se ejecuta en el modo más
-                        privilegiado del procesador, gestionando de forma directa:</p>
+                    <h3>La Tríada CIA</h3>
+                    <p>El modelo central de la seguridad de la información compuesto por tres metas esenciales:</p>
                     <ul class="info-card-list">
-                        <li><strong>Llamadas al sistema:</strong> Interfaces para que los programas interactúen con el
-                            hardware.</li>
-                        <li><strong>Controladores:</strong> Software que traduce comandos para dispositivos físicos.
-                        </li>
+                        <li><strong>Confidencialidad:</strong> Solo usuarios autorizados acceden a los datos.</li>
+                        <li><strong>Integridad:</strong> La información no es alterada ni corrompida.</li>
+                        <li><strong>Disponibilidad:</strong> Acceso continuo a los sistemas cuando se requiera.</li>
                     </ul>
                 </article>
 
@@ -107,16 +107,19 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path
-                                d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                                d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
                             </path>
-                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
                         </svg>
                     </div>
-                    <h3>Procesos e Hilos</h3>
-                    <p>Un proceso representa un programa en ejecución con su propio espacio de memoria reservado. Los
-                        hilos son divisiones más ligeras de un proceso que comparten recursos para acelerar tareas
-                        paralelas.</p>
+                    <h3>Amenazas Comunes (Malware)</h3>
+                    <p>Software hostil diseñado para dañar o explotar computadoras:</p>
+                    <ul class="info-card-list">
+                        <li><strong>Ransomware:</strong> Secuestra archivos y exige un rescate económico.</li>
+                        <li><strong>Phishing:</strong> Suplantación de identidad para robar contraseñas por correo.</li>
+                        <li><strong>Spyware:</strong> Espionaje silencioso de actividades y credenciales.</li>
+                    </ul>
                 </article>
 
                 <!-- Card 3 -->
@@ -124,26 +127,23 @@
                     <div class="card-icon" aria-hidden="true">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z">
-                            </path>
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                         </svg>
                     </div>
-                    <h3>Sistemas de Archivos</h3>
-                    <p>Es la estructura lógica que emplea el SO para organizar, almacenar, nombrar y proteger los datos
-                        en una unidad de disco física. Los formatos comunes incluyen:</p>
-                    <ul class="info-card-list">
-                        <li><strong>ext4:</strong> El estándar robusto de Linux.</li>
-                        <li><strong>NTFS:</strong> Sistema propietario de Windows con control de acceso avanzado.</li>
-                    </ul>
+                    <h3>Criptografía</h3>
+                    <p>El uso de matemáticas para proteger la información en tránsito o en reposo. Transforma datos
+                        legibles en texto cifrado indescifrable mediante algoritmos avanzados como AES-256 o RSA de
+                        llave pública.</p>
                 </article>
             </div>
         </section>
 
-        <!-- Herramientas del Sistema -->
+        <!-- Herramientas de Ciberseguridad -->
         <section class="info-section">
-            <h2 class="section-title">Herramientas de Administración</h2>
-            <p class="section-subtitle">Utilidades nativas indispensables para diagnosticar y controlar el
-                comportamiento del sistema operativo.</p>
+            <h2 class="section-title">Herramientas de Defensa</h2>
+            <p class="section-subtitle">Las tecnologías de seguridad aplicadas para prevenir, detectar y mitigar ataques
+                cibernéticos.</p>
 
             <div class="cards-grid">
                 <!-- Tool 1 -->
@@ -151,15 +151,17 @@
                     <div class="card-icon" aria-hidden="true">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="18" y1="20" x2="18" y2="10"></line>
-                            <line x1="12" y1="20" x2="12" y2="4"></line>
-                            <line x1="6" y1="20" x2="6" y2="14"></line>
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="9" y1="3" x2="9" y2="21"></line>
+                            <line x1="15" y1="3" x2="15" y2="21"></line>
+                            <line x1="3" y1="9" x2="21" y2="9"></line>
+                            <line x1="3" y1="15" x2="21" y2="15"></line>
                         </svg>
                     </div>
-                    <h3>Monitores de Recursos</h3>
-                    <p>Aplicaciones visuales como el <em>Administrador de Tareas</em> (Windows) o <em>htop</em> (Linux)
-                        que reportan en tiempo real el consumo de CPU, RAM, Lectura/Escritura de Disco y ancho de banda
-                        de red por cada proceso.</p>
+                    <h3>Firewalls (Cortafuegos)</h3>
+                    <p>Dispositivos o software que filtran el tráfico de red entrante y saliente según reglas
+                        predefinidas, bloqueando conexiones no deseadas o maliciosas antes de que lleguen a los
+                        servidores internos.</p>
                 </article>
 
                 <!-- Tool 2 -->
@@ -167,14 +169,14 @@
                     <div class="card-icon" aria-hidden="true">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="4 17 10 11 4 5"></polyline>
-                            <line x1="12" y1="19" x2="20" y2="19"></line>
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            <path d="M8 11h8"></path>
                         </svg>
                     </div>
-                    <h3>Intérpretes de Comandos (CLI)</h3>
-                    <p>Consolas de comandos como <em>PowerShell</em>, <em>Bash</em> o <em>Zsh</em>. Permiten a los
-                        administradores programar tareas repetitivas, cambiar configuraciones del sistema profundo y
-                        auditar servicios mediante scripts automatizados.</p>
+                    <h3>Antivirus y EDR</h3>
+                    <p>Los sistemas Endpoint Detection and Response (EDR) van más allá del antivirus tradicional,
+                        monitoreando constantemente el comportamiento de los endpoints en busca de actividades
+                        sospechosas de día cero.</p>
                 </article>
 
                 <!-- Tool 3 -->
@@ -182,24 +184,24 @@
                     <div class="card-icon" aria-hidden="true">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
-                            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
-                            <path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"></path>
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            <line x1="12" y1="15" x2="12" y2="17"></line>
                         </svg>
                     </div>
-                    <h3>Administradores de Disco</h3>
-                    <p>Herramientas que permiten crear particiones lógicas, formatear unidades en distintos sistemas de
-                        archivos, analizar la fragmentación física de los datos y reparar sectores dañados del
-                        almacenamiento.</p>
+                    <h3>Gestores de Contraseñas</h3>
+                    <p>Herramientas que almacenan credenciales de manera encriptada y generan contraseñas únicas y
+                        complejas para cada servicio, eliminando la reutilización de claves sencillas que vulneran
+                        cuentas en cascada.</p>
                 </article>
             </div>
         </section>
 
-        <!-- Consejos y Prevenciones -->
+        <!-- Consejos y Prevención -->
         <section class="info-section">
-            <h2 class="section-title">Consejos y Prevenciones</h2>
-            <p class="section-subtitle">Mejores prácticas para mantener el sistema operativo rápido, estable y libre de
-                fallos críticos.</p>
+            <h2 class="section-title">Consejos y Prevención</h2>
+            <p class="section-subtitle">Hábitos y configuraciones indispensables para proteger tu entorno digital
+                personal y corporativo.</p>
 
             <div class="themed-container">
                 <!-- Consejos -->
@@ -211,31 +213,33 @@
                             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                             <polyline points="22 4 12 14.01 9 11.01"></polyline>
                         </svg>
-                        Optimización del Sistema
+                        Higiene Digital
                     </h3>
                     <ul class="advice-list">
                         <li class="advice-item">
                             <div class="advice-indicator">1</div>
                             <div class="advice-text">
-                                <h4>Gestión de Arranque</h4>
-                                <p>Deshabilita programas innecesarios que se inician automáticamente junto con el SO.
-                                    Esto libera memoria RAM desde el encendido y acelera el tiempo de arranque.</p>
+                                <h4>Contraseñas Robustas</h4>
+                                <p>Crea claves de al menos 12 caracteres mezclando letras mayúsculas, minúsculas,
+                                    números y símbolos. Utiliza frases de contraseña (passphrases) para hacerlas fáciles
+                                    de recordar pero difíciles de adivinar.</p>
                             </div>
                         </li>
                         <li class="advice-item">
                             <div class="advice-indicator">2</div>
                             <div class="advice-text">
-                                <h4>Controlar Memoria Virtual (Swap)</h4>
-                                <p>Configura correctamente el archivo de paginación. Si usas discos SSD rápidos, un
-                                    tamaño administrado por el sistema es óptimo para evitar cuellos de botella.</p>
+                                <h4>Autenticación Multifactor (MFA)</h4>
+                                <p>Activa el MFA en todas tus cuentas clave (correo, banca, redes). Incluso si roban tu
+                                    contraseña, el atacante no podrá ingresar sin el código de un solo uso de tu
+                                    aplicación autenticadora.</p>
                             </div>
                         </li>
                         <li class="advice-item">
                             <div class="advice-indicator">3</div>
                             <div class="advice-text">
-                                <h4>Actualización de Controladores (Drivers)</h4>
-                                <p>Mantén al día los controladores de chipset, GPU y red. Los controladores actualizados
-                                    resuelven fallos de hardware y aumentan la estabilidad del sistema.</p>
+                                <h4>Identificar Enlaces Sospechosos</h4>
+                                <p>Antes de hacer clic en un enlace o descargar archivos adjuntos, verifica el remitente
+                                    del correo. Desconfía de mensajes que exigen acciones urgentes o de emergencia.</p>
                             </div>
                         </li>
                     </ul>
@@ -253,34 +257,34 @@
                             <line x1="12" y1="9" x2="12" y2="13"></line>
                             <line x1="12" y1="17" x2="12.01" y2="17"></line>
                         </svg>
-                        Prevención de Fallos
+                        Prevención Proactiva
                     </h3>
                     <ul class="advice-list">
                         <li class="advice-item">
                             <div class="advice-indicator">1</div>
                             <div class="advice-text">
-                                <h4>Evitar el Llenado de Disco</h4>
-                                <p>Los sistemas operativos necesitan al menos entre un 10% y 15% de espacio libre en la
-                                    partición del sistema para alojar archivos temporales y operaciones de intercambio
-                                    de memoria.</p>
+                                <h4>Respaldos de Datos (Backups)</h4>
+                                <p>Realiza copias de seguridad de tus archivos importantes de forma periódica en un
+                                    disco duro externo desconectado de la red o en una nube segura. Es la mejor defensa
+                                    contra el ransomware.</p>
                             </div>
                         </li>
                         <li class="advice-item">
                             <div class="advice-indicator">2</div>
                             <div class="advice-text">
-                                <h4>Apagado Seguro del Equipo</h4>
-                                <p>Forzar el apagado cortando la corriente puede dejar archivos a medio escribir,
-                                    corrompiendo la tabla del sistema de archivos e impidiendo el próximo inicio del SO.
-                                </p>
+                                <h4>No Usar Redes Wi-Fi Públicas Abiertas</h4>
+                                <p>Evita ingresar a cuentas bancarias o de correo conectado a redes Wi-Fi públicas de
+                                    cafeterías o aeropuertos. Si es estrictamente necesario, hazlo usando una Red
+                                    Privada Virtual (VPN).</p>
                             </div>
                         </li>
                         <li class="advice-item">
                             <div class="advice-indicator">3</div>
                             <div class="advice-text">
-                                <h4>Parches del Sistema Operativo</h4>
-                                <p>Los parches mensuales del SO reparan bugs críticos del núcleo que los atacantes
-                                    aprovechan para escalar privilegios. No pospongas las actualizaciones del sistema.
-                                </p>
+                                <h4>Cerrar Sesiones Activas</h4>
+                                <p>No dejes sesiones abiertas en navegadores de computadoras públicas o de terceros.
+                                    Acostúmbrate a utilizar la opción "Cerrar Sesión" de los portales web al terminar de
+                                    usarlos.</p>
                             </div>
                         </li>
                     </ul>

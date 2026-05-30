@@ -15,9 +15,9 @@ const JWT_SECRET = 'your-super-secret-jwt-key-change-this-in-production';
 // Configurar Helmet para headers de seguridad
 app.use(helmet());
 
-// Configurar CORS restrictivo
+// Configurar CORS restrictivo - Permitir solicitudes desde el servidor PHP
 app.use(cors({
-    origin: 'http://localhost:3000',
+    origin: 'http://localhost:8000', 
     credentials: true,
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -28,8 +28,8 @@ app.use(express.json({ limit: '10kb' })); // Limitar tamaño del payload
 
 // Rate Limiter para login (5 intentos por 15 minutos)
 const loginLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutos
-    max: 5, // máximo 5 intentos
+    windowMs: 15 * 60 * 1000, 
+    max: 5, 
     message: 'Demasiados intentos de inicio de sesión. Intenta de nuevo en 15 minutos.',
     standardHeaders: true,
     legacyHeaders: false,
@@ -37,7 +37,7 @@ const loginLimiter = rateLimit({
 
 // Rate Limiter para crear usuarios (10 intentos por hora)
 const createUserLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000, // 1 hora
+    windowMs: 60 * 60 * 1000, 
     max: 10,
     message: 'Demasiadas solicitudes de creación. Intenta más tarde.',
     skipSuccessfulRequests: false,
@@ -47,7 +47,7 @@ const createUserLimiter = rateLimit({
 function sanitizeInput(input) {
     if (typeof input !== 'string') return input;
     return xss(input, {
-        whiteList: {}, // Sin etiquetas HTML permitidas
+        whiteList: {}, 
         stripIgnoredTag: true,
     });
 }
@@ -72,7 +72,6 @@ function verifyToken(req, res, next) {
 }
 
 // MySQL Connection Pool Configuration
-// Basado en las credenciales por defecto de HeidiSQL (Usuario root, Sin contraseña)
 const dbConfig = {
     host: '127.0.0.1',
     port: 3306,
@@ -100,7 +99,6 @@ function generateToken(user) {
     );
 }
 
-// Intentar inicializar el pool de conexiones
 try {
     pool = mysql.createPool(dbConfig);
     console.log('[DB] Pool de conexiones MySQL creado.');
@@ -128,14 +126,12 @@ const validateAndSanitizeLogin = [
     body('email')
         .trim()
         .custom((value) => {
-            // ✅ Bloquear caracteres especiales peligrosos
             const dangerousChars = ['<', '>', '"', "'", '&', ';', '(', ')', '{', '}', '|', '\\', '^', '`', '$'];
             for (let char of dangerousChars) {
                 if (value.includes(char)) {
                     throw new Error('Correo contiene caracteres no permitidos.');
                 }
             }
-            // ✅ Bloquear palabras clave maliciosas
             const maliciousKeywords = ['script', 'alert', 'onclick', 'onerror', 'onload', 'javascript:', 'data:', 'vbscript:', 'iframe', 'img', 'svg'];
             const lowercaseValue = value.toLowerCase();
             for (let keyword of maliciousKeywords) {
@@ -195,8 +191,6 @@ const validateAndSanitizeUser = [
 
 // --- ENDPOINTS DE API ---
 
-// 1. Iniciar Sesión (Validación con SHA256 y JWT)
-// NOTE: validateAndSanitizeLogin debe ejecutarse antes de checkDbConnection
 app.post('/api/login', loginLimiter, validateAndSanitizeLogin, checkDbConnection, async (req, res) => {
     const { email, password } = req.body;
     
@@ -209,18 +203,14 @@ app.post('/api/login', loginLimiter, validateAndSanitizeLogin, checkDbConnection
         }
         
         const user = rows[0];
-        
-        // Hashear la contraseña ingresada y compararla con la almacenada
         const hashedPassword = hashPassword(password);
         if (user.password !== hashedPassword) {
             console.warn(`[Security] Contraseña incorrecta para usuario: ${email}`);
             return res.status(401).json({ success: false, message: 'Credenciales incorrectas.' });
         }
         
-        // Generar JWT token
         const token = generateToken(user);
         
-        // Inicio de sesión exitoso
         return res.status(200).json({
             success: true,
             message: 'Autenticación exitosa',
@@ -237,9 +227,7 @@ app.post('/api/login', loginLimiter, validateAndSanitizeLogin, checkDbConnection
     }
 });
 
-// 2. Obtener Lista de Usuarios (Solo Administradores)
 app.get('/api/users', checkDbConnection, verifyToken, async (req, res) => {
-    // Validar autorización de rol
     if (!req.user || req.user.rol !== 'Admin') {
         console.warn(`[Security] Intento de acceso no autorizado a /api/users`);
         return res.status(403).json({ success: false, message: 'Acceso denegado.' });
@@ -247,7 +235,6 @@ app.get('/api/users', checkDbConnection, verifyToken, async (req, res) => {
     
     try {
         const [rows] = await pool.query('SELECT id, email, rol, fecha_creacion FROM usuarios ORDER BY id DESC');
-        // Sanitizar datos antes de enviar
         const safeUsers = rows.map(u => ({
             id: u.id,
             email: sanitizeInput(u.email),
@@ -261,11 +248,7 @@ app.get('/api/users', checkDbConnection, verifyToken, async (req, res) => {
     }
 });
 
-// 3. Registrar un Nuevo Usuario (Solo Administradores)
-// 3. Registrar un Nuevo Usuario (Solo Administradores)
-// Orden: verificar token -> validar entrada -> verificar conexión a BD
 app.post('/api/users', createUserLimiter, verifyToken, validateAndSanitizeUser, checkDbConnection, async (req, res) => {
-    // Validar autorización de rol
     if (!req.user || req.user.rol !== 'Admin') {
         console.warn(`[Security] Intento de creación de usuario sin permisos`);
         return res.status(403).json({ success: false, message: 'Acceso denegado.' });
@@ -274,13 +257,9 @@ app.post('/api/users', createUserLimiter, verifyToken, validateAndSanitizeUser, 
     const { email, password, rol } = req.body;
     
     try {
-        // Sanitizar email antes de almacenar
         const sanitizedEmail = sanitizeInput(email);
-        
-        // Hashear la contraseña antes de almacenarla
         const hashedPassword = hashPassword(password);
         
-        // Insertar en la BD con datos sanitizados
         await pool.query('INSERT INTO usuarios (email, password, rol) VALUES (?, ?, ?)', 
             [sanitizedEmail, hashedPassword, rol]);
         
@@ -291,7 +270,6 @@ app.post('/api/users', createUserLimiter, verifyToken, validateAndSanitizeUser, 
             message: `Usuario registrado con éxito.` 
         });
     } catch (err) {
-        // Controlar correos duplicados
         if (err.code === 'ER_DUP_ENTRY') {
             return res.status(400).json({ success: false, message: 'Este correo ya está registrado.' });
         }
@@ -300,7 +278,6 @@ app.post('/api/users', createUserLimiter, verifyToken, validateAndSanitizeUser, 
     }
 });
 
-// Manejo de errores global
 app.use((err, req, res, next) => {
     console.error('[Error]', err.message);
     res.status(500).json({ 
@@ -309,8 +286,7 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Arrancar el Servidor
 app.listen(PORT, () => {
     console.log(`[Server] ✅ Servidor ejecutándose en http://localhost:${PORT}`);
-    console.log(`[Security] 🔒 Protecciones activas: Helmet, CORS restrictivo, Rate Limiting, JWT, XSS`);
+    console.log(`[Security] 🔒 CORS configurado para aceptar peticiones desde el puerto 8000`);
 });
